@@ -31,7 +31,7 @@ export default function DashboardPage() {
   // Fetch all projects
   const fetchProjects = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/projects");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects`);
 
       const data = await res.json();
 
@@ -44,7 +44,7 @@ export default function DashboardPage() {
   // Delete project
   const deleteProject = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/projects/${id}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects/${id}`, {
         method: "DELETE",
       });
 
@@ -53,6 +53,18 @@ export default function DashboardPage() {
       console.error("Error deleting project:", error);
     }
   };
+
+  useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
+  fetchProjects();
+  fetchStats();
+  }, []);
 
   // Start editing
   const startEdit = (project) => {
@@ -70,6 +82,20 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
+  const [stats, setStats] = useState({
+  total: 0,
+  active: 0,
+  completed: 0,
+  pending: 0
+});
+
+
+  const fetchStats = async () => {
+    const res = await fetch(`${API}/api/stats`);
+    const data = await res.json();
+    setStats(data);
+  };
+
   return (
     <div className="dashboard-layout">
       <Sidebar />
@@ -78,14 +104,12 @@ export default function DashboardPage() {
         <Topbar />
 
         <div className="stats-grid">
-          <StatCard title="Users" value="120" />
-          <StatCard title="Projects" value={projects.length} />
-          <StatCard title="Revenue" value="$12K" />
-          <StatCard title="Servers" value="6" />
+          <StatCard title="Total Projects" value={stats.total} />
+          <StatCard title="Active" value={stats.active} />
+          <StatCard title="Completed" value={stats.completed} />
+          <StatCard title="Pending" value={stats.pending} />
         </div>
-
-        <AnalyticsCharts />
-
+<AnalyticsCharts />
         <ProjectForm
           refreshProjects={fetchProjects}
           editingProject={editingProject}
@@ -108,3 +132,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
